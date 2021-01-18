@@ -1,59 +1,65 @@
 package br.com.smanager.mesquitagomes.sales;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Stream;
+
+import br.com.smanager.mesquitagomes.matematica.MathCustom;
+
 public class SalesItem {
 
+    private Integer quantity;
     private String description;
     private double price;
-    private SalesItemTaxType type;
+    private Set<SalesItemTax> taxes = new HashSet<SalesItemTax>();
 
-    SalesItem(String description, Double price) {
-	this(description, price, SalesItemTaxType.BASICTAX);
-    }
-
-    SalesItem(String description, Double price, SalesItemTaxType type) {
-	setDescription(description);
-	setPrice(price);
-	setSalesItemTaxType(type);
-    }
-
-    public String getDescription() {
-	return description;
-    }
-
-    public void setDescription(String description) {
+    public SalesItem(String quantity, String description, String price) {
 	this.description = description;
+	this.quantity = Integer.valueOf(quantity);
+	this.price = Double.valueOf(price);
     }
 
-    public double getPrice() {
-	return price;
+    public Set<SalesItemTax> getTaxes() {
+	return taxes;
     }
 
-    public void setPrice(double price) {
-	this.price = price;
+    public void setTaxes(Set<SalesItemTax> taxes) {
+	this.taxes = taxes;
     }
 
-    public SalesItemTaxType getSalesItemTaxType() {
-	return type;
+    public void addTax(SalesItemTax tax) {
+	taxes.add(tax);
     }
 
-    public void setSalesItemTaxType(SalesItemTaxType type) {
-	this.type = type;
+    public boolean isImported() {
+	return this.description.contains("imported");
     }
 
-    public double getSalesTax() {
-	return type.calculateSalesTax(getPrice());
+    public boolean isExempted() {
+	Stream<String> exemptDescriptions = Stream.of("book", "chocolate", "pill");
+	return exemptDescriptions.anyMatch(exemptedItem -> this.description.contains(exemptedItem));
     }
 
-    public double getTotal() {
-	return type.calculateTotalTax(getPrice());
+    public double getTaxAmount() {
+	Double totalSalesTax = 0.0;
+	for (SalesItemTax tax : taxes) {
+	    totalSalesTax += tax.calculateTax(this.price);
+	}
+	return totalSalesTax * this.quantity;
+    }
+
+    public double getTotalAmount() {
+	return MathCustom.roundOffPrice(this.price * this.quantity + this.getTaxAmount());
     }
 
     @Override
     public String toString() {
 	StringBuilder string = new StringBuilder("");
-	string.append(getDescription());
+	string.append(this.quantity);
+	string.append(" ");
+	string.append(this.description);
 	string.append(": ");
-	string.append(getTotal());
+	string.append(getTotalAmount());
 	return string.toString();
     }
 
